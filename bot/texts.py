@@ -1,37 +1,60 @@
 RULES_TEXT = (
-    "Перед размещением важно:\n"
-    "• На фото и на видео обязательно должна быть записка (листок или экран телефона/планшета/ноутбука) с текстом: SECOND FLOWERS\n"
-    "• На фото и видео должна быть одинаковая записка\n"
-    "• На записке должна быть сегодняшняя дата и время\n\n"
-    "⚠️ Важно:\n"
-    "• После публикации фото/видео НЕ удаляются из канала. После успешной продажи удаляются только контакты.\n"
-    "• Фото/видео из интернета или канала не принимаются.\n"
-    "• Попытки обмана → блок аккаунта.\n\n"
-    "Стоимость размещения: 30 000 сум"
+    "Правила:\n"
+    "• На фото/видео должна быть записка: SECOND FLOWERS\n"
+    "• Дата и время — сегодняшние\n"
+    "• Записка должна быть видна\n\n"
+    "⚠️ Фото из интернета запрещены"
 )
 
-def build_caption(title: str, region: str, district: str, freshness: str, comment: str, price: str, contact: str) -> str:
+AD_FEE = 20000
+
+
+def fmt_sum(num: int) -> str:
+    return f"{num:,}".replace(",", " ")
+
+
+def build_public_caption(
+    title: str,
+    region: str,
+    city: str,
+    district: str,
+    address: str,
+    freshness: str,
+    comment: str,
+    price: str,
+    phone: str,
+    user_username: str | None,
+) -> str:
+    contact_line = phone.strip()
+    if user_username:
+        contact_line = f"{contact_line} | @{user_username}"
+
+    loc = f"{region}, {city}"
+    if district and district.strip():
+        loc += f", {district}"
+
     return (
         f"<b>{title}</b>\n\n"
-        f"Регион: {region}\n"
-        f"Район: {district}\n"
+        f"Локация: {loc}\n"
+        f"Адрес: {address}\n"
         f"Свежесть: {freshness}\n"
         f"Комментарий: {comment}\n\n"
         f"Цена: {price} сум\n"
-        f"Контакты: {contact}"
+        f"Контакты: {contact_line}"
     )
 
-def mark_sold_caption(caption: str, remove_contacts: bool = True) -> str:
-    if remove_contacts:
-        lines = caption.splitlines()
-        new_lines = []
-        for ln in lines:
-            if ln.strip().lower().startswith("контакты:"):
-                new_lines.append("Контакты: удалены")
-            else:
-                new_lines.append(ln)
-        caption = "\n".join(new_lines)
 
-    if "ПРОДАНО!" in caption:
-        return caption
-    return caption + "\n\n<b>ПРОДАНО! ✅</b>"
+def build_admin_info(user_full_name: str, user_username: str | None, user_id: int, phone: str) -> str:
+    uname = f"@{user_username}" if user_username else "—"
+    return (
+        f"От: {user_full_name}\n"
+        f"Username: {uname}\n"
+        f"ID: {user_id}\n"
+        f"Телефон: {phone}"
+    )
+
+
+def mark_sold_caption(public_caption: str) -> str:
+    if "ПРОДАНО!" in public_caption:
+        return public_caption
+    return public_caption + "\n\n<b>ПРОДАНО! ✅</b>"
