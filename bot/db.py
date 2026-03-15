@@ -85,21 +85,17 @@ class DB:
               user_full_name TEXT NOT NULL,
               user_username TEXT,
               status TEXT NOT NULL,
-
               title TEXT NOT NULL,
               region TEXT NOT NULL,
               city TEXT NOT NULL,
               district TEXT NOT NULL,
               address TEXT NOT NULL,
-
               freshness TEXT NOT NULL,
               comment TEXT NOT NULL,
               price TEXT NOT NULL,
               contact TEXT NOT NULL,
-
               media_json TEXT NOT NULL,
               public_caption TEXT NOT NULL,
-
               channel_first_message_id INTEGER,
               channel_control_message_id INTEGER
             );
@@ -199,7 +195,6 @@ class DB:
 
     async def set_published(self, listing_id: int, first_msg_id: int, control_msg_id: int) -> None:
         async with aiosqlite.connect(self.path) as db:
-            await self._ensure_listings_columns(db)
             await db.execute("""
               UPDATE listings
               SET status='published',
@@ -242,7 +237,6 @@ class DB:
         seller_payout_amount: int,
     ) -> int:
         async with aiosqlite.connect(self.path) as db:
-            await self._ensure_deals_columns(db)
             cur = await db.execute("""
               INSERT INTO deals (
                 listing_id, seller_id, buyer_id,
@@ -280,7 +274,6 @@ class DB:
 
     async def get_active_deal_by_listing(self, listing_id: int) -> Optional[Deal]:
         async with aiosqlite.connect(self.path) as db:
-            await self._ensure_deals_columns(db)
             db.row_factory = aiosqlite.Row
             cur = await db.execute("""
               SELECT * FROM deals
@@ -308,7 +301,6 @@ class DB:
 
     async def set_deal_payment_file(self, deal_id: int, file_id: str) -> None:
         async with aiosqlite.connect(self.path) as db:
-            await self._ensure_deals_columns(db)
             await db.execute("""
               UPDATE deals
               SET buyer_payment_file_id=?, status='buyer_paid_pending_admin'
@@ -318,7 +310,6 @@ class DB:
 
     async def confirm_buyer_paid(self, deal_id: int) -> None:
         async with aiosqlite.connect(self.path) as db:
-            await self._ensure_deals_columns(db)
             await db.execute("""
               UPDATE deals
               SET status='buyer_paid'
@@ -328,7 +319,6 @@ class DB:
 
     async def reject_buyer_paid(self, deal_id: int) -> None:
         async with aiosqlite.connect(self.path) as db:
-            await self._ensure_deals_columns(db)
             await db.execute("""
               UPDATE deals
               SET status='waiting_buyer_payment', buyer_payment_file_id=''
@@ -338,7 +328,6 @@ class DB:
 
     async def set_seller_card(self, deal_id: int, card: str) -> None:
         async with aiosqlite.connect(self.path) as db:
-            await self._ensure_deals_columns(db)
             await db.execute("""
               UPDATE deals
               SET seller_card=?, status='waiting_seller_delivery'
@@ -348,7 +337,6 @@ class DB:
 
     async def set_seller_delivery_file(self, deal_id: int, file_id: str) -> None:
         async with aiosqlite.connect(self.path) as db:
-            await self._ensure_deals_columns(db)
             await db.execute("""
               UPDATE deals
               SET seller_delivery_file_id=?, status='waiting_buyer_confirmation'
@@ -358,7 +346,6 @@ class DB:
 
     async def set_buyer_confirmed(self, deal_id: int) -> None:
         async with aiosqlite.connect(self.path) as db:
-            await self._ensure_deals_columns(db)
             await db.execute("""
               UPDATE deals
               SET status='buyer_confirmed'
@@ -368,7 +355,6 @@ class DB:
 
     async def set_problem(self, deal_id: int) -> None:
         async with aiosqlite.connect(self.path) as db:
-            await self._ensure_deals_columns(db)
             await db.execute("""
               UPDATE deals
               SET status='problem'
@@ -378,7 +364,6 @@ class DB:
 
     async def set_payout_done(self, deal_id: int) -> None:
         async with aiosqlite.connect(self.path) as db:
-            await self._ensure_deals_columns(db)
             await db.execute("""
               UPDATE deals
               SET status='seller_paid'

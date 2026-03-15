@@ -1,18 +1,5 @@
-# venv
 .venv/
-venv/
-
-# python
 __pycache__/
 *.pyc
-
-# env secrets
 .env
-
-# db
 *.sqlite
-*.db
-
-# ide
-.vscode/
-.idea/

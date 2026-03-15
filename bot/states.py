@@ -15,10 +15,6 @@ class NewListing(StatesGroup):
     confirm = State()
 
 
-class AdminExamples(StatesGroup):
-    collecting = State()
-
-
 class BuyerDealProof(StatesGroup):
     waiting_proof = State()
 

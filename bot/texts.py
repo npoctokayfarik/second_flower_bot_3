@@ -52,9 +52,3 @@ def build_admin_info(user_full_name: str, user_username: str | None, user_id: in
         f"ID: {user_id}\n"
         f"Телефон: {phone}"
     )
-
-
-def mark_sold_caption(public_caption: str) -> str:
-    if "ПРОДАНО!" in public_caption:
-        return public_caption
-    return public_caption + "\n\n<b>ПРОДАНО! ✅</b>"

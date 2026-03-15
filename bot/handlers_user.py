@@ -5,7 +5,7 @@ from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 
 from .states import NewListing, BuyerDealProof, SellerCard, SellerDeliveryProof
-from .texts import RULES_TEXT, build_public_caption, fmt_sum, AD_FEE
+from .texts import RULES_TEXT, build_public_caption, fmt_sum
 from .keyboards import (
     kb_start,
     kb_confirm,
@@ -15,19 +15,18 @@ from .keyboards import (
     kb_district_tashkent,
     kb_finish_media,
     kb_buyer_send_receipt,
-    kb_seller_send_card,
     kb_seller_send_delivery,
     kb_buyer_confirm_received,
-    kb_admin_payment_confirm,
 )
 from .db import DB
 from .utils import build_media_group
+from .config import load_config
 
 user_router = Router()
+cfg = load_config()
 
 PHONE_RE = re.compile(r"^\+?\d[\d\s\-()]{7,}$")
 CARD_RE = re.compile(r"^\d{16}$")
-ADMIN_CARD = "9860040120797168"
 
 REGION_NAME = {
     "krk": "Республика Каракалпакстан",
@@ -48,26 +47,29 @@ REGION_NAME = {
 }
 
 CITY_NAME = {
-    "nukus":"Нукус","khodjeyli":"Ходжейли","turtkul":"Турткуль","beruni":"Беруни","kungrad":"Кунград","moynaq":"Муйнак","chimbay":"Чимбай",
-    "tashkent":"Ташкент","chirchiq":"Чирчик","angren":"Ангрен","almalyk":"Алмалык","bekabad":"Бекабад","yangiyul":"Янгиюль","gazalkent":"Газалкент",
-    "andijan":"Андижан","asaka":"Асака","shahrikhan":"Шахрихан","khanabad":"Ханабад",
-    "bukhara":"Бухара","kagan":"Каган","gijduvan":"Гиждуван",
-    "fergana":"Фергана","kokand":"Коканд","margilan":"Маргилан","kuva":"Кува",
-    "jizzakh":"Джизак","paxtakor":"Пахтакор",
-    "urgench":"Ургенч","khiva":"Хива","hazorasp":"Хазарасп",
-    "qarshi":"Карши","shahrisabz":"Шахрисабз","guzar":"Гузар",
-    "navoi":"Навои","zarafshan":"Зарафшан","uchquduq":"Учкудук",
-    "namangan":"Наманган","chust":"Чуст","pap":"Пап",
-    "samarkand":"Самарканд","kattakurgan":"Каттакурган","urgut":"Ургут",
-    "gulistan":"Гулистан","yangier":"Янгиер","shirin":"Ширин",
-    "termez":"Термез","denau":"Денау","sherabad":"Шерабад",
-    "other":"Другое",
+    "nukus": "Нукус", "khodjeyli": "Ходжейли", "turtkul": "Турткуль", "beruni": "Беруни",
+    "kungrad": "Кунград", "moynaq": "Муйнак", "chimbay": "Чимбай",
+    "tashkent": "Ташкент", "chirchiq": "Чирчик", "angren": "Ангрен", "almalyk": "Алмалык",
+    "bekabad": "Бекабад", "yangiyul": "Янгиюль", "gazalkent": "Газалкент",
+    "andijan": "Андижан", "asaka": "Асака", "shahrikhan": "Шахрихан", "khanabad": "Ханабад",
+    "bukhara": "Бухара", "kagan": "Каган", "gijduvan": "Гиждуван",
+    "fergana": "Фергана", "kokand": "Коканд", "margilan": "Маргилан", "kuva": "Кува",
+    "jizzakh": "Джизак", "paxtakor": "Пахтакор",
+    "urgench": "Ургенч", "khiva": "Хива", "hazorasp": "Хазарасп",
+    "qarshi": "Карши", "shahrisabz": "Шахрисабз", "guzar": "Гузар",
+    "navoi": "Навои", "zarafshan": "Зарафшан", "uchquduq": "Учкудук",
+    "namangan": "Наманган", "chust": "Чуст", "pap": "Пап",
+    "samarkand": "Самарканд", "kattakurgan": "Каттакурган", "urgut": "Ургут",
+    "gulistan": "Гулистан", "yangier": "Янгиюль", "shirin": "Ширин",
+    "termez": "Термез", "denau": "Денау", "sherabad": "Шерабад",
+    "other": "Другое",
 }
 
 DISTRICT_NAME = {
-    "almazar":"Алмазар","bektemir":"Бектемир","mirabad":"Мирабад","mirzo_ulugbek":"Мирзо-Улугбек",
-    "sergeli":"Сергелий","uchtepa":"Учтепа","chilanzar":"Чиланзар","shaykhontohur":"Шайхантахур",
-    "yunusabad":"Юнусабад","yakkasaray":"Яккасарай","yashnabad":"Яшнабад","other":"Другое"
+    "almazar": "Алмазар", "bektemir": "Бектемир", "mirabad": "Мирабад",
+    "mirzo_ulugbek": "Мирзо-Улугбек", "sergeli": "Сергелий", "uchtepa": "Учтепа",
+    "chilanzar": "Чиланзар", "shaykhontohur": "Шайхантахур", "yunusabad": "Юнусабад",
+    "yakkasaray": "Яккасарай", "yashnabad": "Яшнабад", "other": "Другое",
 }
 
 
@@ -119,9 +121,15 @@ async def safe_cb_answer(cb: CallbackQuery):
 
 
 def mark_reserved_caption(public_caption: str) -> str:
-    if "ЗАБРОНИРОВАНО" in public_caption:
-        return public_caption
-    return public_caption + "\n\n⏳ <b>ЗАБРОНИРОВАНО</b>"
+    lines = []
+    for line in public_caption.split("\n"):
+        if line.strip().startswith("Контакты:"):
+            continue
+        lines.append(line)
+    clean = "\n".join(lines).strip()
+    if "ЗАБРОНИРОВАНО" in clean:
+        return clean
+    return clean + "\n\n⏳ <b>ЗАБРОНИРОВАНО</b>"
 
 
 @user_router.message(CommandStart())
@@ -174,14 +182,14 @@ async def start(m: Message, db: DB, channel_id: int):
                         message_id=listing.channel_first_message_id,
                         caption=reserved_caption,
                         parse_mode="HTML",
-                        reply_markup=None
+                        reply_markup=None,
                     )
                 except Exception:
                     try:
                         await m.bot.edit_message_reply_markup(
                             chat_id=channel_id,
                             message_id=listing.channel_first_message_id,
-                            reply_markup=None
+                            reply_markup=None,
                         )
                     except Exception:
                         pass
@@ -190,19 +198,18 @@ async def start(m: Message, db: DB, channel_id: int):
                 f"💳 Оплатите букет администрации\n\n"
                 f"Сумма: <b>{fmt_sum(price)} сум</b>\n\n"
                 f"Карта администратора:\n"
-                f"<code>{ADMIN_CARD}</code>\n\n"
-                f"После оплаты отправьте чек.",
-                reply_markup=kb_buyer_send_receipt(deal_id)
+                f"<code>{cfg.admin_card}</code>\n\n"
+                f"Толемнен кейин чекти жиберин:",
+                reply_markup=kb_buyer_send_receipt(deal_id),
             )
 
             try:
                 await m.bot.send_message(
                     listing.user_id,
-                    f"💐 Ваш букет забронирован!\n\nСделка ID: {deal_id}\nЖдём подтверждение оплаты."
+                    f"💐 Ваш букет забронирован!\n\nСделка ID: {deal_id}\nЖдём подтверждение оплаты.",
                 )
             except Exception:
                 pass
-
             return
         except Exception as e:
             print("BUY ERROR:", e)
@@ -219,7 +226,7 @@ async def donate(cb: CallbackQuery):
         "Если вам нравится наш сервис и вы хотите помочь развитию проекта,\n"
         "вы можете отправить любую сумму доната.\n\n"
         "💳 <b>Карта для доната:</b>\n"
-        "<code>9860040120797168</code>\n\n"
+        f"<code>{cfg.admin_card}</code>\n\n"
         "Спасибо за поддержку ❤️"
     )
 
@@ -228,10 +235,13 @@ async def donate(cb: CallbackQuery):
 async def new(cb: CallbackQuery, state: FSMContext):
     await safe_cb_answer(cb)
     await state.clear()
+
     await cb.message.answer(
-        f"📢 <b>Размещение объявления стоит {fmt_sum(AD_FEE)} сум</b>\n\n"
-        f"Сначала создай объявление. После отправки заявки администратор подтвердит публикацию.\n\n"
-        f"💳 Карта администратора: <b>{ADMIN_CARD}</b>"
+        f"📢 <b>Размещение объявления стоит {fmt_sum(cfg.ad_price)} сум</b>\n\n"
+        "Сначала создай объявление.\n"
+        "После отправки заявки администратор подтвердит публикацию.\n\n"
+        "💳 <b>Карта администратора:</b>\n"
+        f"<code>{cfg.admin_card}</code>"
     )
     await cb.message.answer("Название букета:")
     await state.set_state(NewListing.title)
@@ -377,10 +387,10 @@ async def st_price(m: Message, state: FSMContext):
 
     await state.update_data(price=str(price_int))
     await m.answer(
-        f"Стоимость размещения объявления: <b>{fmt_sum(AD_FEE)} сум</b>\n"
+        f"Стоимость размещения объявления: <b>{fmt_sum(cfg.ad_price)} сум</b>\n"
         f"После оплаты объявление будет опубликовано.\n\n"
         f"Отправь номер телефона:",
-        reply_markup=kb_request_phone()
+        reply_markup=kb_request_phone(),
     )
     await state.set_state(NewListing.contact)
 
@@ -475,7 +485,7 @@ async def send_to_review(cb: CallbackQuery, state: FSMContext, db: DB, admin_ids
         user_id=cb.from_user.id,
         user_full_name=cb.from_user.full_name or "—",
         user_username=cb.from_user.username,
-        data=data
+        data=data,
     )
     await state.clear()
 
@@ -486,7 +496,7 @@ async def send_to_review(cb: CallbackQuery, state: FSMContext, db: DB, admin_ids
         user_full_name=cb.from_user.full_name or "—",
         user_username=cb.from_user.username,
         user_id=cb.from_user.id,
-        phone=data["contact"]
+        phone=data["contact"],
     )
 
     for admin_id in admin_ids:
@@ -497,8 +507,8 @@ async def send_to_review(cb: CallbackQuery, state: FSMContext, db: DB, admin_ids
             group[0].caption = (
                 f"Новая заявка ID {listing_id}\n\n"
                 f"{admin_info}\n\n"
-                f"Стоимость размещения: {fmt_sum(AD_FEE)} сум\n"
-                f"Карта администратора: {ADMIN_CARD}\n\n"
+                f"Стоимость размещения: {fmt_sum(cfg.ad_price)} сум\n"
+                f"Карта администратора: {cfg.admin_card}\n\n"
                 f"Пост в канал:\n{data['public_caption']}"
             )
             group[0].parse_mode = "HTML"
@@ -506,7 +516,7 @@ async def send_to_review(cb: CallbackQuery, state: FSMContext, db: DB, admin_ids
             await cb.bot.send_message(
                 chat_id=admin_id,
                 text=f"Модерация заявки ID {listing_id}:",
-                reply_markup=kb_admin_review(listing_id)
+                reply_markup=kb_admin_review(listing_id),
             )
         except Exception as e:
             print("SEND TO ADMIN ERROR:", e)
@@ -517,6 +527,7 @@ async def send_to_review(cb: CallbackQuery, state: FSMContext, db: DB, admin_ids
 @user_router.callback_query(F.data.startswith("deal_send_receipt:"))
 async def deal_send_receipt(cb: CallbackQuery, state: FSMContext, db: DB):
     await safe_cb_answer(cb)
+
     deal_id = int(cb.data.split(":", 1)[1])
     deal = await db.get_deal(deal_id)
     if not deal:
@@ -526,7 +537,10 @@ async def deal_send_receipt(cb: CallbackQuery, state: FSMContext, db: DB):
 
     await state.update_data(deal_id=deal_id)
     await state.set_state(BuyerDealProof.waiting_proof)
-    await cb.message.answer("Скинь чек оплаты фото/видео/документом")
+    await cb.message.answer(
+        "Толемнен кейин чекти жиберин:\n\n"
+        "Скинь чек оплаты фото/видео/документом"
+    )
 
 
 @user_router.message(BuyerDealProof.waiting_proof)
@@ -622,7 +636,7 @@ async def seller_card_input(m: Message, state: FSMContext, db: DB, admin_ids: se
         await m.bot.send_message(
             deal.seller_id,
             "Теперь свяжись с покупателем, узнай куда отправить букет, потом отправь букет и скинь доказательство отправки.",
-            reply_markup=kb_seller_send_delivery(deal_id)
+            reply_markup=kb_seller_send_delivery(deal_id),
         )
     except Exception:
         pass

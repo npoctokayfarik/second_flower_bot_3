@@ -1,106 +1,64 @@
-import os
 import asyncio
-import traceback
+import logging
+
 from aiohttp import web
-from dotenv import load_dotenv
-
 from aiogram import Bot, Dispatcher
-from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
 
+from .config import load_config
 from .db import DB
 from .handlers_user import user_router
 from .handlers_admin import admin_router
 
-
-def parse_admin_ids(raw: str) -> set[int]:
-    raw = (raw or "").replace(" ", "")
-    if not raw:
-        return set()
-
-    out = set()
-    for x in raw.split(","):
-        if not x:
-            continue
-        try:
-            out.add(int(x))
-        except ValueError:
-            pass
-    return out
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 async def health(request: web.Request):
-    return web.json_response({"ok": True})
+    return web.Response(text="ok")
 
 
-async def start_web_server(port: int):
+async def start_health_server(port: int):
     app = web.Application()
     app.router.add_get("/", health)
     app.router.add_get("/health", health)
 
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, host="0.0.0.0", port=port)
+    site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
     print(f"🌐 Health server started on :{port}")
 
 
 async def main():
-    try:
-        load_dotenv()
+    cfg = load_config()
 
-        bot_token = os.getenv("BOT_TOKEN", "").strip()
-        channel_id_raw = os.getenv("CHANNEL_ID", "").strip()
-        admin_ids_raw = os.getenv("ADMIN_IDS", "").strip()
-        db_path = os.getenv("DATABASE_PATH", "data/bot.db").strip()
-        port = int(os.getenv("PORT", "10000"))
+    db = DB(cfg.db_path)
+    await db.init()
 
-        missing = []
-        if not bot_token:
-            missing.append("BOT_TOKEN")
-        if not channel_id_raw:
-            missing.append("CHANNEL_ID")
-        if not admin_ids_raw:
-            missing.append("ADMIN_IDS")
+    bot = Bot(
+        token=cfg.bot_token,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+    )
 
-        if missing:
-            print("❌ Missing settings:", ", ".join(missing))
-            raise RuntimeError("ENV is not set")
+    dp = Dispatcher()
 
-        channel_id = int(channel_id_raw)
-        admin_ids = parse_admin_ids(admin_ids_raw)
+    @dp.update.outer_middleware()
+    async def inject(handler, event, data):
+        data["db"] = db
+        data["admin_ids"] = cfg.admin_ids
+        data["channel_id"] = cfg.channel_id
+        return await handler(event, data)
 
-        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    dp.include_router(admin_router)
+    dp.include_router(user_router)
 
-        db = DB(db_path)
-        await db.init()
+    await start_health_server(cfg.port)
 
-        bot = Bot(
-            token=bot_token,
-            default=DefaultBotProperties(parse_mode=ParseMode.HTML)
-        )
-
-        dp = Dispatcher()
-        dp.include_router(user_router)
-        dp.include_router(admin_router)
-
-        async def inject(handler, event, data):
-            data["db"] = db
-            data["admin_ids"] = admin_ids
-            data["channel_id"] = channel_id
-            return await handler(event, data)
-
-        dp.update.middleware(inject)
-
-        await bot.delete_webhook(drop_pending_updates=True)
-        await start_web_server(port)
-        print("🤖 Bot polling started")
-        await dp.start_polling(bot)
-
-    except Exception:
-        print("💥 APP CRASHED:")
-        traceback.print_exc()
-        raise
+    print("🤖 Bot polling started")
+    await bot.delete_webhook(drop_pending_updates=True)
+    await dp.start_polling(bot)
 
 
 if __name__ == "__main__":

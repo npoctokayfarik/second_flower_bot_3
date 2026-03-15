@@ -10,13 +10,32 @@ from .keyboards import (
     kb_admin_payout,
     kb_seller_send_card,
 )
-from .texts import mark_sold_caption, fmt_sum, AD_FEE
+from .texts import fmt_sum
+from .config import load_config
 
 admin_router = Router()
+cfg = load_config()
 
 
 def is_admin(user_id: int, admin_ids: set[int]) -> bool:
     return user_id in admin_ids
+
+
+def remove_contacts_from_caption(caption: str) -> str:
+    lines = caption.split("\n")
+    cleaned = []
+    for line in lines:
+        if line.strip().startswith("Контакты:"):
+            continue
+        cleaned.append(line)
+    return "\n".join(cleaned).strip()
+
+
+def make_sold_caption(caption: str) -> str:
+    caption = remove_contacts_from_caption(caption)
+    if "ПРОДАНО" in caption:
+        return caption
+    return caption + "\n\n✅ <b>ПРОДАНО</b>"
 
 
 @admin_router.message(Command("set_examples"))
@@ -30,29 +49,16 @@ async def cmd_set_examples(m: Message, db: DB, admin_ids: set[int]):
 async def set_admin_card(m: Message, db: DB, admin_ids: set[int]):
     if not is_admin(m.from_user.id, admin_ids):
         return
-    parts = (m.text or "").split(maxsplit=1)
-    if len(parts) < 2:
-        return await m.answer("Используй так:\n/set_admin_card 9860040120797168")
-
-    card = "".join(ch for ch in parts[1] if ch.isdigit())
-    if len(card) != 16:
-        return await m.answer("Нужен номер карты из 16 цифр")
-
-    await db.set_setting("admin_card_number", card)
-    await m.answer(f"✅ Карта администратора сохранена:\n{card}")
+    await m.answer(
+        f"Сейчас карта берётся из .env / Render ENV:\n\n<code>{cfg.admin_card}</code>"
+    )
 
 
 @admin_router.message(Command("set_admin_name"))
 async def set_admin_name(m: Message, db: DB, admin_ids: set[int]):
     if not is_admin(m.from_user.id, admin_ids):
         return
-    parts = (m.text or "").split(maxsplit=1)
-    if len(parts) < 2:
-        return await m.answer("Используй так:\n/set_admin_name NURLAN ADMIN")
-
-    holder = parts[1].strip()
-    await db.set_setting("admin_card_holder", holder)
-    await m.answer(f"✅ Имя получателя сохранено:\n{holder}")
+    await m.answer("Имя получателя сейчас можно тоже хранить через ENV при необходимости.")
 
 
 @admin_router.message(F.photo)
@@ -111,7 +117,6 @@ async def admin_publish(cb: CallbackQuery, db: DB, admin_ids: set[int], channel_
 
     first_message_id = None
 
-    # одно медиа = одно сообщение с кнопкой
     if len(media_items) == 1:
         item = media_items[0]
         media_type = item.get("type")
@@ -127,7 +132,6 @@ async def admin_publish(cb: CallbackQuery, db: DB, admin_ids: set[int], channel_
                     reply_markup=buy_markup,
                 )
                 first_message_id = msg.message_id
-
             elif media_type == "video":
                 msg = await cb.bot.send_video(
                     chat_id=channel_id,
@@ -139,14 +143,12 @@ async def admin_publish(cb: CallbackQuery, db: DB, admin_ids: set[int], channel_
                 first_message_id = msg.message_id
             else:
                 return await cb.message.answer("Неизвестный тип медиа")
-
         except Exception as e:
             return await cb.message.answer(f"Ошибка публикации: {e}")
 
         await db.set_published(listing_id, first_message_id, first_message_id)
         return await cb.message.answer("✅ Опубликовано одним сообщением")
 
-    # несколько медиа = первое с кнопкой, остальные альбомом
     first_item = media_items[0]
     rest_items = media_items[1:]
 
@@ -160,7 +162,6 @@ async def admin_publish(cb: CallbackQuery, db: DB, admin_ids: set[int], channel_
                 reply_markup=buy_markup,
             )
             first_message_id = first_msg.message_id
-
         elif first_item.get("type") == "video":
             first_msg = await cb.bot.send_video(
                 chat_id=channel_id,
@@ -210,7 +211,7 @@ async def admin_reject(cb: CallbackQuery, db: DB, admin_ids: set[int]):
             chat_id=listing.user_id,
             text=(
                 f"❌ Заявка отклонена (ID {listing_id}).\n"
-                f"Стоимость размещения объявления: {fmt_sum(AD_FEE)} сум."
+                f"Стоимость размещения объявления: {fmt_sum(cfg.ad_price)} сум."
             )
         )
     except Exception:
@@ -385,7 +386,7 @@ async def deal_payout_done(cb: CallbackQuery, db: DB, admin_ids: set[int], chann
 
     await db.set_payout_done(deal_id)
 
-    new_caption = mark_sold_caption(listing.public_caption)
+    new_caption = make_sold_caption(listing.public_caption)
     await db.set_listing_sold(listing.id, new_caption)
 
     if listing.channel_first_message_id:
