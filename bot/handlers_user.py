@@ -47,29 +47,70 @@ REGION_NAME = {
 }
 
 CITY_NAME = {
-    "nukus": "Нукус", "khodjeyli": "Ходжейли", "turtkul": "Турткуль", "beruni": "Беруни",
-    "kungrad": "Кунград", "moynaq": "Муйнак", "chimbay": "Чимбай",
-    "tashkent": "Ташкент", "chirchiq": "Чирчик", "angren": "Ангрен", "almalyk": "Алмалык",
-    "bekabad": "Бекабад", "yangiyul": "Янгиюль", "gazalkent": "Газалкент",
-    "andijan": "Андижан", "asaka": "Асака", "shahrikhan": "Шахрихан", "khanabad": "Ханабад",
-    "bukhara": "Бухара", "kagan": "Каган", "gijduvan": "Гиждуван",
-    "fergana": "Фергана", "kokand": "Коканд", "margilan": "Маргилан", "kuva": "Кува",
-    "jizzakh": "Джизак", "paxtakor": "Пахтакор",
-    "urgench": "Ургенч", "khiva": "Хива", "hazorasp": "Хазарасп",
-    "qarshi": "Карши", "shahrisabz": "Шахрисабз", "guzar": "Гузар",
-    "navoi": "Навои", "zarafshan": "Зарафшан", "uchquduq": "Учкудук",
-    "namangan": "Наманган", "chust": "Чуст", "pap": "Пап",
-    "samarkand": "Самарканд", "kattakurgan": "Каттакурган", "urgut": "Ургут",
-    "gulistan": "Гулистан", "yangier": "Янгиюль", "shirin": "Ширин",
-    "termez": "Термез", "denau": "Денау", "sherabad": "Шерабад",
+    "nukus": "Нукус",
+    "khodjeyli": "Ходжейли",
+    "turtkul": "Турткуль",
+    "beruni": "Беруни",
+    "kungrad": "Кунград",
+    "moynaq": "Муйнак",
+    "chimbay": "Чимбай",
+    "tashkent": "Ташкент",
+    "chirchiq": "Чирчик",
+    "angren": "Ангрен",
+    "almalyk": "Алмалык",
+    "bekabad": "Бекабад",
+    "yangiyul": "Янгиюль",
+    "gazalkent": "Газалкент",
+    "andijan": "Андижан",
+    "asaka": "Асака",
+    "shahrikhan": "Шахрихан",
+    "khanabad": "Ханабад",
+    "bukhara": "Бухара",
+    "kagan": "Каган",
+    "gijduvan": "Гиждуван",
+    "fergana": "Фергана",
+    "kokand": "Коканд",
+    "margilan": "Маргилан",
+    "kuva": "Кува",
+    "jizzakh": "Джизак",
+    "paxtakor": "Пахтакор",
+    "urgench": "Ургенч",
+    "khiva": "Хива",
+    "hazorasp": "Хазарасп",
+    "qarshi": "Карши",
+    "shahrisabz": "Шахрисабз",
+    "guzar": "Гузар",
+    "navoi": "Навои",
+    "zarafshan": "Зарафшан",
+    "uchquduq": "Учкудук",
+    "namangan": "Наманган",
+    "chust": "Чуст",
+    "pap": "Пап",
+    "samarkand": "Самарканд",
+    "kattakurgan": "Каттакурган",
+    "urgut": "Ургут",
+    "gulistan": "Гулистан",
+    "yangier": "Янгиер",
+    "shirin": "Ширин",
+    "termez": "Термез",
+    "denau": "Денау",
+    "sherabad": "Шерабад",
     "other": "Другое",
 }
 
 DISTRICT_NAME = {
-    "almazar": "Алмазар", "bektemir": "Бектемир", "mirabad": "Мирабад",
-    "mirzo_ulugbek": "Мирзо-Улугбек", "sergeli": "Сергелий", "uchtepa": "Учтепа",
-    "chilanzar": "Чиланзар", "shaykhontohur": "Шайхантахур", "yunusabad": "Юнусабад",
-    "yakkasaray": "Яккасарай", "yashnabad": "Яшнабад", "other": "Другое",
+    "almazar": "Алмазар",
+    "bektemir": "Бектемир",
+    "mirabad": "Мирабад",
+    "mirzo_ulugbek": "Мирзо-Улугбек",
+    "sergeli": "Сергелий",
+    "uchtepa": "Учтепа",
+    "chilanzar": "Чиланзар",
+    "shaykhontohur": "Шайхантахур",
+    "yunusabad": "Юнусабад",
+    "yakkasaray": "Яккасарай",
+    "yashnabad": "Яшнабад",
+    "other": "Другое",
 }
 
 
@@ -402,7 +443,10 @@ async def st_contact_by_contact(m: Message, state: FSMContext):
         return await m.answer("Отправь номер телефона 🙂", reply_markup=kb_request_phone())
 
     await state.update_data(contact=phone, media=[])
-    await m.answer("Отправь фото/видео\nПотом нажми ✅ Завершить", reply_markup=kb_finish_media())
+    await m.answer(
+        "Отправь фото/видео\nПотом нажми ✅ Завершить",
+        reply_markup=kb_finish_media()
+    )
     await m.answer("⬇️", reply_markup=ReplyKeyboardRemove())
     await state.set_state(NewListing.media)
 
@@ -414,39 +458,71 @@ async def st_contact_manual(m: Message, state: FSMContext):
         return await m.answer("Отправь номер телефона 🙂", reply_markup=kb_request_phone())
 
     await state.update_data(contact=phone, media=[])
-    await m.answer("Отправь фото/видео\nПотом нажми ✅ Завершить", reply_markup=kb_finish_media())
+    await m.answer(
+        "Отправь фото/видео\nПотом нажми ✅ Завершить",
+        reply_markup=kb_finish_media()
+    )
     await m.answer("⬇️", reply_markup=ReplyKeyboardRemove())
     await state.set_state(NewListing.media)
 
 
-@user_router.message(NewListing.media)
-async def media_collect(m: Message, state: FSMContext):
+@user_router.message(NewListing.media, F.photo)
+async def media_collect_photo(m: Message, state: FSMContext):
     data = await state.get_data()
     media = data.get("media", [])
 
     if len(media) >= 10:
-        return await m.answer("Максимум 10", reply_markup=kb_finish_media())
+        return await m.answer("Максимум 10 фото/видео", reply_markup=kb_finish_media())
 
-    if m.photo:
-        media.append({"type": "photo", "file_id": m.photo[-1].file_id})
-        await state.update_data(media=media)
-        return await m.answer(f"✅ Добавлено ({len(media)}/10)", reply_markup=kb_finish_media())
+    media.append({"type": "photo", "file_id": m.photo[-1].file_id})
+    await state.update_data(media=media)
 
-    if m.video:
-        media.append({"type": "video", "file_id": m.video.file_id})
-        await state.update_data(media=media)
-        return await m.answer(f"✅ Добавлено ({len(media)}/10)", reply_markup=kb_finish_media())
+    await m.answer(
+        f"✅ Фото добавлено ({len(media)}/10)\n"
+        f"Можешь отправить ещё или нажать «✅ Завершить фото/видео»",
+        reply_markup=kb_finish_media()
+    )
 
-    await m.answer("Отправь фото/видео или нажми ✅ Завершить", reply_markup=kb_finish_media())
+
+@user_router.message(NewListing.media, F.video)
+async def media_collect_video(m: Message, state: FSMContext):
+    data = await state.get_data()
+    media = data.get("media", [])
+
+    if len(media) >= 10:
+        return await m.answer("Максимум 10 фото/видео", reply_markup=kb_finish_media())
+
+    media.append({"type": "video", "file_id": m.video.file_id})
+    await state.update_data(media=media)
+
+    await m.answer(
+        f"✅ Видео добавлено ({len(media)}/10)\n"
+        f"Можешь отправить ещё или нажать «✅ Завершить фото/видео»",
+        reply_markup=kb_finish_media()
+    )
+
+
+@user_router.message(NewListing.media)
+async def media_collect_other(m: Message):
+    await m.answer(
+        "Отправь именно фото или видео.\n"
+        "Когда закончишь — нажми «✅ Завершить фото/видео»",
+        reply_markup=kb_finish_media()
+    )
 
 
 @user_router.callback_query(NewListing.media, F.data == "finish_media")
 async def finish_media(cb: CallbackQuery, state: FSMContext):
     await safe_cb_answer(cb)
+
     data = await state.get_data()
     media = data.get("media", [])
+
     if not media:
-        return await cb.message.answer("Нужно хотя бы 1 фото/видео", reply_markup=kb_finish_media())
+        return await cb.message.answer(
+            "Сначала отправь хотя бы 1 фото или видео",
+            reply_markup=kb_finish_media()
+        )
 
     district = (data.get("district") or "").strip()
 
@@ -462,8 +538,13 @@ async def finish_media(cb: CallbackQuery, state: FSMContext):
         phone=data["contact"],
         user_username=cb.from_user.username,
     )
+
     await state.update_data(public_caption=public_caption, district=district)
-    await cb.message.answer("Проверь объявление:\n\n" + public_caption, reply_markup=kb_confirm())
+
+    await cb.message.answer(
+        "Проверь объявление:\n\n" + public_caption,
+        reply_markup=kb_confirm()
+    )
     await state.set_state(NewListing.confirm)
 
 
@@ -559,6 +640,8 @@ async def buyer_send_receipt_file(m: Message, state: FSMContext, db: DB, admin_i
     await db.set_deal_payment_file(deal_id, file_id)
     await state.clear()
     await m.answer("Чек отправлен на проверку администратору ✅")
+
+    from .keyboards import kb_admin_payment_confirm
 
     for admin_id in admin_ids:
         try:
