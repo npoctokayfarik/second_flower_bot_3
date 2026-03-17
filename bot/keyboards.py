@@ -115,11 +115,9 @@ REGIONS = [
 ]
 
 CITIES = {
-    "krk": [("Нукус", "nukus"), ("Ходжейли", "khodjeyli"), ("Турткуль", "turtkul"), ("Беруни", "beruni"),
-            ("Кунград", "kungrad"), ("Муйнак", "moynaq"), ("Чимбай", "chimbay"), ("Другое", "other")],
+    "krk": [("Нукус", "nukus"), ("Ходжейли", "khodjeyli"), ("Турткуль", "turtkul"), ("Беруни", "beruni"), ("Кунград", "kungrad"), ("Муйнак", "moynaq"), ("Чимбай", "chimbay"), ("Другое", "other")],
     "tash_city": [("Ташкент", "tashkent"), ("Другое", "other")],
-    "tash_obl": [("Чирчик", "chirchiq"), ("Ангрен", "angren"), ("Алмалык", "almalyk"), ("Бекабад", "bekabad"),
-                 ("Янгиюль", "yangiyul"), ("Газалкент", "gazalkent"), ("Другое", "other")],
+    "tash_obl": [("Чирчик", "chirchiq"), ("Ангрен", "angren"), ("Алмалык", "almalyk"), ("Бекабад", "bekabad"), ("Янгиюль", "yangiyul"), ("Газалкент", "gazalkent"), ("Другое", "other")],
     "and": [("Андижан", "andijan"), ("Асака", "asaka"), ("Шахрихан", "shahrikhan"), ("Ханабад", "khanabad"), ("Другое", "other")],
     "bkh": [("Бухара", "bukhara"), ("Каган", "kagan"), ("Гиждуван", "gijduvan"), ("Другое", "other")],
     "fer": [("Фергана", "fergana"), ("Коканд", "kokand"), ("Маргилан", "margilan"), ("Кува", "kuva"), ("Другое", "other")],

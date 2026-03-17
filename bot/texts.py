@@ -6,8 +6,6 @@ RULES_TEXT = (
     "⚠️ Фото из интернета запрещены"
 )
 
-AD_FEE = 20000
-
 
 def fmt_sum(num: int) -> str:
     return f"{num:,}".replace(",", " ")
@@ -29,13 +27,13 @@ def build_public_caption(
     if user_username:
         contact_line = f"{contact_line} | @{user_username}"
 
-    loc = f"{region}, {city}"
+    location = f"{region}, {city}"
     if district and district.strip():
-        loc += f", {district}"
+        location += f", {district}"
 
     return (
         f"<b>{title}</b>\n\n"
-        f"Локация: {loc}\n"
+        f"Локация: {location}\n"
         f"Адрес: {address}\n"
         f"Свежесть: {freshness}\n"
         f"Комментарий: {comment}\n\n"
@@ -45,10 +43,10 @@ def build_public_caption(
 
 
 def build_admin_info(user_full_name: str, user_username: str | None, user_id: int, phone: str) -> str:
-    uname = f"@{user_username}" if user_username else "—"
+    username = f"@{user_username}" if user_username else "—"
     return (
         f"От: {user_full_name}\n"
-        f"Username: {uname}\n"
+        f"Username: {username}\n"
         f"ID: {user_id}\n"
         f"Телефон: {phone}"
     )
